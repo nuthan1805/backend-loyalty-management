@@ -1,0 +1,7 @@
+PUT http://localhost:3000/transactions/123487634
+Content-Type: application/json
+
+{
+  "points": 20,
+  "description": "Update"
+}
