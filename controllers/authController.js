@@ -1,33 +1,69 @@
-const supabase = require('../supabaseClient');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const supabase = require('../supabaseClient');
 
-const register = async (req, res) => {
-  const { email, password } = req.body;
-  const hashedPassword = await bcrypt.hash(password, 10);
-  const { data, error } = await supabase
-    .from('admin_users')
-    .insert([{ email, password: hashedPassword }]);
+exports.register = async (req, res) => {
+  const { username, email, password } = req.body;
+  try {
+      const { data, error } = await supabase
+          .from('users')
+          .select('email')
+          .eq('email', email);
 
-  if (error) return res.status(400).json({ error: error.message });
-  res.status(201).json({ message: 'Admin registered successfully' });
+      if (data.length > 0) {
+          return res.status(400).json({ message: 'Email already exists' });
+      }
+      const { data: usernameData, error: usernameError } = await supabase
+          .from('users')
+          .select('username')
+          .eq('username', username);
+
+      if (usernameData.length > 0) {
+          return res.status(400).json({ message: 'Username already exists' });
+      }
+
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      const { error: insertError } = await supabase
+          .from('users')
+          .insert([{ username, email, password: hashedPassword }]);
+
+      if (insertError) {
+          throw insertError;
+      }
+
+      res.status(201).json({ message: 'User registered successfully' });
+  } catch (error) {
+      res.status(500).json({ message: error.message });
+  }
 };
 
-const login = async (req, res) => {
-  const { email, password } = req.body;
-  const { data, error } = await supabase
-    .from('admin_users')
-    .select('*')
-    .eq('email', email)
-    .single();
+exports.login = async (req, res) => {
+  const { identifier, password } = req.body;
+  try {
+    const { data, error } = await supabase
+      .from('users')
+      .select('*')
+      .or(`email.eq.${identifier},username.eq.${identifier}`)
+      .single();
 
-  if (error || !data) return res.status(400).json({ error: 'Invalid credentials' });
+    if (error || !data) {
+      return res.status(400).json({ message: 'Invalid credentials' });
+    }
 
-  const validPass = await bcrypt.compare(password, data.password);
-  if (!validPass) return res.status(400).json({ error: 'Invalid credentials' });
+    const isMatch = await bcrypt.compare(password, data.password);
 
-  const token = jwt.sign({ id: data.id }, process.env.JWT_SECRET);
-  res.json({ token });
+    if (!isMatch) {
+      return res.status(400).json({ message: 'Invalid credentials' });
+    }
+
+    const token = jwt.sign({ id: data.id, username: data.username, email: data.email }, process.env.JWT_SECRET, {
+      expiresIn: '1h',
+    });
+
+    res.status(200).json({ token, username: data.username, email: data.email });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 };
 
-module.exports = { register, login };

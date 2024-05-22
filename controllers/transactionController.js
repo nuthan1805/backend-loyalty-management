@@ -1,142 +1,75 @@
 const supabase = require('../supabaseClient');
 
+// Add transaction
 const addTransaction = async (req, res) => {
   try {
-    const { member_id, points, description } = req.body;
+    const { member_id, name, points_updated, description, type, updated_by, status } = req.body;
 
-    if (!member_id || !points || !description) {
-      return res.status(400).json({ error: 'Please provide member_id, points, and description' });
+    if (!member_id || !points_updated || !description || !type || !updated_by || !status) {
+      return res.status(400).json({ status: 'error', message: 'Missing required fields' });
     }
 
-    const { data: existingTransactions, error: existingError } = await supabase
-      .from('transactions')
-      .select('id')
-      .eq('member_id', member_id);
-
-    if (existingError) {
-      throw existingError;
-    }
-
-    if (existingTransactions.length > 0) {
-      return res.status(400).json({ error: 'Transaction for this member already exists. Use update to modify points.' });
-    }
-
-    const { data, error } = await supabase
-      .from('transactions')
-      .insert([{ member_id, points, description }]);
-
-    if (error) {
-      throw error;
-    }
-
-    res.status(201).json({ status: 'success', message: 'Transaction created successfully' });
-  } catch (error) {
-    console.error('Error creating transaction:', error);
-    res.status(500).json({ error: 'An error occurred while creating transaction' });
-  }
-};
-
-const getTransactions = async (req, res) => {
-  try {
-    const { data, error } = await supabase.from('transactions').select('*');
-
-    if (error) {
-      throw error;
-    }
-
-    res.json(data);
-  } catch (error) {
-    console.error('Error fetching transactions:', error);
-    res.status(500).json({ error: 'An error occurred while fetching transactions' });
-  }
-};
-
-const updateTransaction = async (req, res) => {
-  try {
-    const { member_id } = req.params;
-    const { points, description } = req.body;
-
-    if (!points || !description) {
-      return res.status(400).json({ error: 'Please provide points and description' });
-    }
-
-    const { data: existingTransaction, error: fetchError } = await supabase
-      .from('transactions')
-      .select('*')
+    const { data: memberData, error: memberError } = await supabase
+      .from('members')
+      .select('points')
       .eq('member_id', member_id)
       .single();
 
-    if (fetchError || !existingTransaction) {
-      return res.status(404).json({ error: 'Transaction not found for the given member ID' });
+    if (memberError) throw memberError;
+
+    let newPoints = memberData.points;
+
+    const pointsChange = parseInt(points_updated, 10);
+    if (type === 'credit') {
+      newPoints += pointsChange;
+    } else if (type === 'debit') {
+      newPoints -= pointsChange;
     }
+
+    if (newPoints < 0) {
+      return res.status(400).json({ status: 'error', message: 'Insufficient points' });
+    }
+
+    const { error: updateError } = await supabase
+      .from('members')
+      .update({ points: newPoints })
+      .eq('member_id', member_id);
+
+    if (updateError) throw updateError;
 
     const { data, error } = await supabase
       .from('transactions')
-      .update({ points, description, updated_at: new Date().toISOString() })
-      .eq('member_id', member_id)
-      .select();
+      .insert([{ member_id, name, points_updated: pointsChange, description, type, updated_by, status }]);
 
-    if (error) {
-      throw error;
-    }
+    if (error) throw error;
 
-    res.json({ status: 'success', message: 'Transaction updated successfully' });
+    res.status(201).json({ status: 'success', message: 'Transaction created successfully', data });
   } catch (error) {
-    console.error('Error updating transaction:', error);
-    res.status(500).json({ error: 'An error occurred while updating transaction' });
+    console.error('Error creating transaction:', error);
+    res.status(500).json({ status: 'error', message: 'An error occurred while creating transaction' });
   }
 };
 
-
-const deleteTransaction = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { data, error } = await supabase.from('transactions').delete().eq('id', id);
-
-    if (error) {
-      throw error;
-    }
-
-    if (data.length === 0) {
-      return res.status(404).json({ error: 'Transaction not found' });
-    }
-
-    res.json({ status: 'success', message: 'Transaction deleted successfully' });
-  } catch (error) {
-    console.error('Error deleting transaction:', error);
-    res.status(500).json({ error: 'An error occurred while deleting transaction' });
-  }
-};
-
+// Get transaction history by member_id
 const getTransactionHistory = async (req, res) => {
   try {
     const { member_id } = req.params;
-
-    if (!member_id) {
-      return res.status(400).json({ error: 'Please provide a member_id' });
-    }
-
     const { data, error } = await supabase
       .from('transactions')
       .select('*')
       .eq('member_id', member_id)
       .order('created_at', { ascending: false });
 
-    if (error) {
-      throw error;
-    }
+    if (error) throw error;
 
-    res.json(data);
+    res.status(200).json(data);
   } catch (error) {
     console.error('Error fetching transaction history:', error);
-    res.status(500).json({ error: 'An error occurred while fetching transaction history' });
+    res.status(500).json({ status: 'error', message: 'An error occurred while fetching transaction history' });
   }
 };
 
 module.exports = {
   addTransaction,
-  getTransactions,
-  updateTransaction,
-  deleteTransaction,
   getTransactionHistory
 };
