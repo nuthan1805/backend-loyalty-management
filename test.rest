@@ -1,7 +1,9 @@
-PUT http://localhost:3000/transactions/123487634
+POST http://localhost:3000/auth/register
 Content-Type: application/json
 
 {
-  "points": 20,
-  "description": "Update"
+    "username": "example_user",
+    "email": "example@example.com",
+    "password": "nuthan123"
 }
+
