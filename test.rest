@@ -1,9 +1,18 @@
-POST http://localhost:3000/auth/register
+POST http://localhost:3000/auth/login
 Content-Type: application/json
 
 {
-    "username": "example_user",
-    "email": "example@example.com",
-    "password": "nuthan123"
+  "identifier": "Nuthan",
+  "password": "Nuthan@95"
 }
 
+###
+GET http://localhost:3000/members
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJOdXRoYW4iLCJlbWFpbCI6Im51dGhhbi5zQGNvbXZpdmEuY29tIiwiaWF0IjoxNzE2NTU4Njg0LCJleHAiOjE3MTY1Njk0ODR9.SBit6Cbm_dwxb-EFtJEUlq0bD_XREg15DQ74t5zT84k
+###
+GET http://localhost:3000/transactions/history/A123
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJOdXRoYW4iLCJlbWFpbCI6Im51dGhhbi5zQGNvbXZpdmEuY29tIiwiaWF0IjoxNzE2NTU2NjM4LCJleHAiOjE3MTY1Njc0Mzh9.mEvuh8jt_tqX4zWuwHN6DD_OqyxcyETroyGHzcYHCMI
+
+###
+DELETE http://localhost:3000/members/A124
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwidXNlcm5hbWUiOiJ1andhbCIsImVtYWlsIjoidWp3YWwubEBjb212aXZhLmNvbSIsImlhdCI6MTcxNjU1OTg2NywiZXhwIjoxNzE2NTcwNjY3fQ.XwT5EHFjfb6rwoHimG56x9dHQIXe1YCDCrdUuDjcMLo

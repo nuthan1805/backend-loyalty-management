@@ -5,10 +5,6 @@ const addTransaction = async (req, res) => {
   try {
     const { member_id, name, points_updated, description, type, updated_by, status } = req.body;
 
-    if (!member_id || !points_updated || !description || !type || !updated_by || !status) {
-      return res.status(400).json({ status: 'error', message: 'Missing required fields' });
-    }
-
     const { data: memberData, error: memberError } = await supabase
       .from('members')
       .select('points')
