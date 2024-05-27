@@ -6,7 +6,6 @@ const transactionRoutes = require('./routes/transactionRoutes');
 const pointsRoutes = require('./routes/pointsRoutes');
 const authRoutes = require('./routes/authRoutes');
 
-
 const app = express();
 const port = process.env.PORT || 3000;
 
@@ -17,7 +16,6 @@ app.use('/members', memberRoutes);
 app.use('/transactions', transactionRoutes);
 app.use('/points', pointsRoutes);
 app.use('/auth', authRoutes);
-
 
 app.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`);

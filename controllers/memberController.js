@@ -18,7 +18,6 @@ const getMembers = async (req, res) => {
     res.status(500).json({ status: 'error', message: error.message });
   }
 };
-
 // Add a new member
 const addMember = async (req, res) => {
   const { name, email, member_id, points } = req.body;

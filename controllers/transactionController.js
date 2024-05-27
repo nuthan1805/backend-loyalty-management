@@ -3,11 +3,9 @@ const supabase = require('../supabaseClient');
 // Add transaction
 const addTransaction = async (req, res) => {
   try {
-    const { member_id, name, points_updated, description, type, updated_by, status } = req.body;
+    let { member_id, name, points_updated, description, type, updated_by, status } = req.body;
 
-    if (!member_id || !points_updated || !description || !type || !updated_by || !status) {
-      return res.status(400).json({ status: 'error', message: 'Missing required fields' });
-    }
+    type = type || 'credit';
 
     const { data: memberData, error: memberError } = await supabase
       .from('members')
@@ -17,9 +15,9 @@ const addTransaction = async (req, res) => {
 
     if (memberError) throw memberError;
 
+    const pointsChange = parseInt(points_updated, 10);
     let newPoints = memberData.points;
 
-    const pointsChange = parseInt(points_updated, 10);
     if (type === 'credit') {
       newPoints += pointsChange;
     } else if (type === 'debit') {
@@ -49,6 +47,7 @@ const addTransaction = async (req, res) => {
     res.status(500).json({ status: 'error', message: 'An error occurred while creating transaction' });
   }
 };
+
 
 // Get transaction history by member_id
 const getTransactionHistory = async (req, res) => {
