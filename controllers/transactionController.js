@@ -3,9 +3,7 @@ const supabase = require('../supabaseClient');
 // Add transaction
 const addTransaction = async (req, res) => {
   try {
-    let { member_id, name, points_updated, description, type, updated_by, status } = req.body;
-
-    type = type || 'credit';
+    const { member_id, name, points_updated, description, type, updated_by, status } = req.body;
 
     const { data: memberData, error: memberError } = await supabase
       .from('members')
@@ -14,10 +12,9 @@ const addTransaction = async (req, res) => {
       .single();
 
     if (memberError) throw memberError;
-
     const pointsChange = parseInt(points_updated, 10);
-    let newPoints = memberData.points;
 
+    let newPoints = memberData.points;
     if (type === 'credit') {
       newPoints += pointsChange;
     } else if (type === 'debit') {
