@@ -26,7 +26,7 @@ exports.register = async (req, res) => {
 
       const { error: insertError } = await supabase
           .from('users')
-          .insert([{ username, email, password: hashedPassword }]);
+          .insert([{ username, email, password: hashedPassword, login_status: 0 }]);
 
       if (insertError) {
           throw insertError;
@@ -61,7 +61,20 @@ exports.login = async (req, res) => {
       expiresIn: '3h',
     });
 
-    res.status(200).json({ token, username: data.username, email: data.email });
+    let loginStatus = data.login_status;
+
+    if (loginStatus === 0) {
+      loginStatus = 1;
+    } else if (loginStatus === 1) {
+      loginStatus = 2;
+    }
+
+    await supabase
+      .from('users')
+      .update({ login_status: loginStatus })
+      .eq('id', data.id);
+
+    res.status(200).json({ token, username: data.username, email: data.email, loginStatus });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
